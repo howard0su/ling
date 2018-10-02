@@ -28,7 +28,7 @@
 -export([bad_guy/2]).
 -export([crash/1]).
 
--include_lib("test_server/include/test_server.hrl").
+-include("test_server.hrl").
 -import(lists, [foreach/2]).
 
 suite() -> [{ct_hooks,[ts_install_cth]}].

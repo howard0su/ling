@@ -18,7 +18,7 @@
 %%
 -module(gen_tcp_misc_SUITE).
 
--include_lib("test_server/include/test_server.hrl").
+-include("test_server.hrl").
 
 %-compile(export_all).
 

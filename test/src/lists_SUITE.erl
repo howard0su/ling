@@ -21,7 +21,7 @@
 %%%-----------------------------------------------------------------
 
 -module(lists_SUITE).
--include_lib("test_server/include/test_server.hrl").
+-include("test_server.hrl").
 
 
 % Default timetrap timeout (set in init_per_testcase).
