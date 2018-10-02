@@ -279,7 +279,7 @@ static void ets_ordset_insert_many(ets_table_t *tab, term_t objs)
 	while (obj < my_objects +count)
 	{
 		if (insert_element(&data->root,
-				tab->key_pos, obj->elts, obj->arity, tab) != KEY_MATCH);
+				tab->key_pos, obj->elts, obj->arity, tab) != KEY_MATCH)
 			tab->count++;
 		obj++;
 	}

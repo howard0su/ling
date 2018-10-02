@@ -223,7 +223,7 @@ term_t err_to_term(int x)
 		return A_BADARG;
 	else if (x == -TOO_LONG)
 		return A_SYSTEM_LIMIT;
-	else if (x == -TOO_DEEP);
+	else if (x == -TOO_DEEP)
 		return A_SYSTEM_LIMIT;
 	assert(x == -NOT_FOUND);
 	return A_NOT_FOUND;

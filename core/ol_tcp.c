@@ -950,9 +950,9 @@ static term_t ol_tcp_control(outlet_t *ol,
 		if (family != INET_AF_INET && family != INET_AF_INET6)
 			goto error;
 
-	ret = tcp_control_open(ol, family);
-	if (ret)
-		goto error;
+		ret = tcp_control_open(ol, family);
+		if (ret)
+			goto error;
 
 		*reply++ = INET_REP_OK;
 	}

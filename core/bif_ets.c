@@ -1337,7 +1337,7 @@ term_t cbif_ets_info2(proc_t *proc, term_t *regs)
 		return (tab->fixed > 0) ?A_TRUE :A_FALSE;
 	else if (Item == A_SAFE_FIXED)
 		return ets_fix_info(tab, &proc->hp);
-	else if (Item == A_STATS);
+	else if (Item == A_STATS)
 		return A_FALSE;
 	
 	badarg(Item);
