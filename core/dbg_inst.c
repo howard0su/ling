@@ -52,7 +52,7 @@
 	} while (0)
 
 #define VALID_SUBTAG(tag) do { \
-	if ((tag) == 0x3 || (tag) == 0x4 || (tag) == 0x5) \
+	if ((tag) == 0x4 || (tag) == 0x5) \
 		fatal_error("bad subtag"); \
 	} while (0)
 
