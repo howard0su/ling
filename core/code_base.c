@@ -1242,6 +1242,9 @@ int code_base_load_N(term_t mod_name, uint8_t *ling_data, int data_size)
 					*c++ = shrink_ptr(oi->label);
 					break;
 				}
+				case 10:
+					*c++ = reg_as_term(u32);
+					break;
 				default:
 					/* unused */
 					nfree(module->lit_node);

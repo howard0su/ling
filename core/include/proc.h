@@ -45,7 +45,7 @@
 
 typedef struct proc_t proc_t;
 
-#define NUM_REGS	256
+#define NUM_REGS	1024
 #define NUM_FREGS	16
 
 #define MB_SPACE_SIZE	16

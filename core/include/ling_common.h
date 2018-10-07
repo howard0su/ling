@@ -49,7 +49,7 @@ uint32_t *__expand_ptr(uint32_t n);
 uint32_t __shrink_ptr(void *p);
 #endif
 
-#define QUICK_SIZE	4096
+#define QUICK_SIZE	5120
 
 #if defined(__x86_64__)
 #define PTR_MASK		__INT64_C(0x0000000000000000)

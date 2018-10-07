@@ -114,6 +114,7 @@ scan_chunks(<<>>) ->
 %% 00000111		{str,32} [4]
 %% 00001000		{slot_as_term,32} [4]
 %% 00001001		{opcode,32} [4]
+%% 00001010             {reg_as_term, 32} [4]
 %% ...			(unused)
 %%
 
@@ -240,6 +241,8 @@ enc({reg_as_term,X}) when X < 16 ->
 	<<8:4,X:4>>;
 enc({reg_as_term,X}) when X < 256 ->
 	<<250,X>>;
+enc({reg_as_term,X}) when X < 1024 ->
+	<<255,10,X:32>>;
 enc({slot_as_term,Y}) when Y < 16 ->
 	<<9:4,Y:4>>;
 enc({slot_as_term,Y}) when Y < 256 ->

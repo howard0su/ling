@@ -87,8 +87,6 @@ specialise_args(Code) ->
 
 spec_arg({x,255}) ->
    	erlang:error(x255);
-spec_arg({x,1023}) ->
-	{x,255};
 spec_arg({i,I}) when ?IS_SMALL(I) ->
 	{smallint,I};
 spec_arg({i,I}) ->
