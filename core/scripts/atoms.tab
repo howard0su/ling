@@ -275,6 +275,7 @@ features
 barrier
 flush
 trim
+trim_all
 disk
 disk_async
 disk_async_error

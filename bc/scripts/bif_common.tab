@@ -186,7 +186,7 @@ ling:profile_display()	cbif_profile_display0
 ling:experimental(What,Arg)			cbif_experimental2
 
 ling:exec_info()		cbif_ling_execinfo0
-ling:memory(From,To)	cbif_ling_memory2
+ling:memory(From,To)		cbif_ling_memory2
 ling:peek8(Addr)		cbif_ling_memb1
 ling:peek32(Addr)		cbif_ling_meml1
 
@@ -352,6 +352,10 @@ binary:embedded_size(Bucket,Name)			cbif_embedded_size2
 binary:embedded_part(Bucket,Name,Pos,Len)	cbif_embedded_part4
 binary:embedded_part(Bucket,Name,PosLen)	cbif_embedded_part3
 binary:lookup_embedded(Name)				cbif_lookup_embedded1
+
+## new in 19.0
+binary:split(Subject,Pattern)			cbif_bin_split2
+binary:split(Subject,Pattern,Options)		cbif_bin_split3
 
 # for LINC
 binary:ip_checksum(Hdr)				cbif_ip_checksum1

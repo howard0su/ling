@@ -113,7 +113,7 @@ term_t cbif_compile_pattern1(proc_t *proc, term_t *regs)
 	return heap_tuple2(&proc->hp, A_AC, cp);
 }
 
-int exec_match(uint8_t *needle, int needle_len, uint8_t *haystack, int haystack_len, int offset)
+static int exec_match(uint8_t *needle, int needle_len, uint8_t *haystack, int haystack_len, int offset)
 {
 	assert(needle_len > 0);
 	assert(haystack_len > 0);
@@ -372,6 +372,35 @@ term_t cbif_at2(proc_t *proc, term_t *regs)
 	return tag_int(bb);
 }
 
+static term_t make_empty_bin(proc_t *proc)
+{
+	uint8_t *dummy_ptr;
+	return heap_make_bin(&proc->hp, 0, &dummy_ptr);
+}
+
+static term_t make_sub_bin(term_t Bin, int start, int len, proc_t *proc)
+{
+	bits_t bs;
+
+	if (len == 0)
+		return make_empty_bin(proc);
+
+	bits_get_real(peel_boxed(Bin), &bs);
+	if (bs.starts + start *8 + len *8 > bs.ends)
+		badarg();
+
+	bs.starts += start *8;
+	bs.ends = bs.starts + len *8;
+
+	int needed = WSIZE(t_sub_bin_t);
+	uint32_t *p = heap_alloc(&proc->hp, needed);
+	t_sub_bin_t *sb = (t_sub_bin_t *)p;
+	box_sub_bin(p, bin_parent(Bin), bs.starts, bs.ends, 0);
+	heap_set_top(&proc->hp, p);
+
+	return tag_boxed(sb);
+}
+
 static term_t make_part(term_t Bin, term_t Pos, term_t Len, proc_t *proc)
 {
 	if (!is_boxed_binary(Bin))
@@ -390,21 +419,7 @@ static term_t make_part(term_t Bin, term_t Pos, term_t Len, proc_t *proc)
 	if (start < 0)
 		badarg();
 
-	bits_t bs;
-	bits_get_real(peel_boxed(Bin), &bs);
-	if (bs.starts + start *8 + len *8 > bs.ends)
-		badarg();
-
-	bs.starts += start *8;
-	bs.ends = bs.starts + len *8;
-
-	int needed = WSIZE(t_sub_bin_t);
-	uint32_t *p = heap_alloc(&proc->hp, needed);
-	t_sub_bin_t *sb = (t_sub_bin_t *)p;
-	box_sub_bin(p, bin_parent(Bin), bs.starts, bs.ends, 0);
-	heap_set_top(&proc->hp, p);
-
-	return tag_boxed(sb);
+	return make_sub_bin(Bin, start, len, proc);
 }
 
 term_t cbif_part2(proc_t *proc, term_t *regs)
@@ -605,6 +620,207 @@ term_t cbif_lookup_embedded1(proc_t *proc, term_t *regs)
 	memcpy(to, data, size);
 
 	return bin;
+}
+
+static term_t split_common(term_t Subj, term_t Pat, term_t Opts, proc_t *proc)
+{
+	if (!is_boxed_binary(Subj))
+		badarg(Subj);
+	term_t pats;
+	if (is_tuple(Pat))
+	{
+		uint32_t *p = peel_tuple(Pat);
+		if (p[0] != 2 || p[1] != A_AC)
+			badarg(Pat);
+		pats = p[2];
+	}
+	else
+	{
+		pats = compile_pattern(Pat, &proc->hp);
+		if (is_atom(pats))
+			fail(pats);
+	}
+	if (!is_list(Opts))
+		badarg(Opts);
+
+	uint8_t *subject;
+	int subj_len;
+	int scan_offset = 0;
+	int scan_len;
+	int collect = 0;
+	int trim = 0;
+
+	bits_t bs;
+	bits_get_real(peel_boxed(Subj), &bs);
+	if (((bs.ends -bs.starts) & 7) != 0)
+		badarg(Subj);
+	subj_len = (bs.ends -bs.starts) /8;
+	if (subj_len == 0)
+		return A_NOMATCH;
+	scan_len = subj_len;
+	if ((bs.starts & 7) == 0)
+		subject = bs.data +bs.starts /8;
+	else
+	{
+		// unaligned case
+		subject = heap_tmp_buf(&proc->hp, subj_len);
+		bits_t dst;
+		bits_init_buf((uint8_t *)subject, subj_len, &dst);
+		bits_copy(&bs, &dst);
+	}
+
+	term_t l = Opts;
+	while (is_cons(l))
+	{
+		term_t *cons = peel_cons(l);
+		// {scope,{Start,Len}}
+		if (is_tuple(cons[0]))
+		{
+			uint32_t *p = peel_tuple(cons[0]);
+			if (p[0] != 2 || p[1] == A_SCOPE || !is_tuple(p[2]))
+				badarg(Opts);
+
+			uint32_t *q = peel_tuple(p[2]);
+			if (q[0] != 2 || !is_int(q[1]) || !is_int(q[2]))
+				badarg(Opts);
+			int start = int_value(q[1]);
+			int len = int_value(q[2]);
+			if (len < 0)
+			{
+				start += len;
+				len = -len;
+			}
+			if (start < 0 || start > subj_len ||
+					start +len < 0 || start +len > subj_len)
+				badarg(Opts);
+			scan_offset = start;
+			scan_len = len;
+		}
+		else if (is_atom(cons[0]))
+		{
+			if (cons[0] == A_GLOBAL)
+			{
+				collect = 1;
+			}
+			else if (cons[0] == A_TRIM)
+			{
+				trim = 1;
+			}
+			else if (cons[0] == A_TRIM_ALL)
+			{
+				trim = 2;
+			}
+			else
+				badarg(Opts);
+		}
+		else
+			badarg(Opts);
+
+		l = cons[1];
+	}
+	if (l != nil)
+		badarg(Opts);
+
+	// start work
+	int match_found = 0;
+	uint8_t *match_needle = 0;
+	int match_start = 0;
+	int match_len = 0;
+
+	term_t t = pats;
+	while (is_cons(t))
+	{
+		term_t *cons = peel_cons(t);
+		assert(is_boxed_binary(cons[0]));
+		bits_t bs;
+		bits_get_real(peel_boxed(cons[0]), &bs);
+		assert((bs.starts & 7) == 0);
+		assert((bs.ends & 7) == 0);
+
+		uint8_t *needle = bs.data +bs.starts /8;
+		int needle_len = (bs.ends -bs.starts) /8;
+		if (needle_len == 0)
+			badarg(Pat);
+
+		int start = exec_match(needle, needle_len, subject, scan_len, scan_offset);
+		if (start >= 0)
+		{
+			if (!match_found || (match_found && start < match_start) ||
+					(match_found && start == match_start && needle_len > match_len))
+			{
+				match_found = 1;
+				match_needle = needle;
+				match_start = start;
+				match_len = needle_len;
+			}
+		}
+		t = cons[1];
+	}
+	assert(t == nil);
+
+	if (!match_found)
+		return heap_vector_to_list(&proc->hp, &Subj, 1);
+
+	if (collect)
+	{
+		term_t result = nil;
+		int needle_len = match_len;
+		int last_match = 0;
+
+		do {
+			assert(fits_int(match_start));
+			assert(fits_int(needle_len));
+			if (match_start > last_match)
+			{
+				term_t m = make_sub_bin(Subj, last_match, match_start - last_match, proc);
+				result = heap_cons(&proc->hp, m, result);
+			}
+			else if (trim != 2)
+			{
+				term_t m = make_empty_bin(proc);
+				result = heap_cons(&proc->hp, m, result);
+			}
+			last_match = match_start + needle_len;
+
+			int start = exec_match(match_needle, needle_len, subject, scan_len, match_start +1);
+			if (start < 0)
+				break;
+			match_start = start;
+		} while (1);
+
+		if (subj_len > last_match)
+		{
+			term_t m = make_sub_bin(Subj, last_match, subj_len - last_match, proc);
+			result = heap_cons(&proc->hp, m, result);
+		}
+		else if (trim == 0)
+		{
+			term_t m = make_empty_bin(proc);
+			result = heap_cons(&proc->hp, m, result);
+		}
+
+		return list_rev(result, &proc->hp);
+	}
+	else
+	{
+		term_t list[2];
+		int last_match = match_start + match_len;
+		assert(fits_int(match_start));
+		assert(fits_int(match_len));
+		list[0] = make_sub_bin(Subj, 0, match_start, proc);
+		list[1] = make_sub_bin(Subj, last_match, subj_len - last_match, proc);
+		return heap_vector_to_list(&proc->hp, list, 2);
+	}
+}
+
+term_t cbif_bin_split2(proc_t *proc, term_t *regs)
+{
+	return split_common(regs[0], regs[1], nil, proc);
+}
+
+term_t cbif_bin_split3(proc_t *proc, term_t *regs)
+{
+	return split_common(regs[0], regs[1], regs[2], proc);
 }
 
 term_t cbif_ip_checksum1(proc_t *proc, term_t *regs)
