@@ -139,7 +139,7 @@ ifdef LING_POSIX
 LING_PLATFORM := unix
 ifdef LING_LINUX
 CC := gcc
-LDFLAGS += -nostdlib
+LDFLAGS += -no-pie -nostdlib
 LING_OS := linux
 else ifdef LING_DARWIN
 CC := clang
@@ -209,6 +209,7 @@ CPPFLAGS += -DTRACE_HARNESS=1
 CPPFLAGS += -gdwarf-3
 LDFLAGS  += -g
 else
+CFLAGS += -g
 CFLAGS += -O3
 ifdef LING_USE_LTO
 CFLAGS += -flto

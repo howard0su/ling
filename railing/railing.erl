@@ -43,7 +43,7 @@ ld(posix) ->
 			"-arch", "x86_64"
 		];
 		{unix, linux} ->
-			["gcc", "-lm"];
+			["gcc", "-lm", "-no-pie"];
 		_ ->
 			gold()
 	end;
