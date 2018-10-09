@@ -63,6 +63,23 @@ int map_merge(term_t *ks, term_t *vs, int n,
 			  term_t *ks1, term_t *vs1)
 {
 	int sz = 0;
+	int i, j;
+	for(i = 0; i < nkvs - 1; i++)
+		for(j = i + 1; j < nkvs; j++)
+		{
+			if (is_term_smaller(kvs[j*2], kvs[i*2]))
+			{
+				term_t temp;
+				temp = kvs[i*2];
+				kvs[i*2] = kvs[j*2];
+				kvs[j*2] = temp;
+
+				temp = kvs[i*2 + 1];
+				kvs[i*2 + 1] = kvs[j*2 + 1];
+				kvs[j*2 + 1] = temp;
+			}
+		}
+
 	while (n > 0 && nkvs > 0)
 	{
 		term_t a = *ks;

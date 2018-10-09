@@ -303,6 +303,7 @@ term_t cbif_merge2(proc_t *proc, term_t *regs)
 		term_t keys = tag_tuple(p);
 		*p++ = size;
 		memcpy(p, mks, size *sizeof(term_t));
+		p+=size;
 		term_t out = tag_boxed(p);
 		term_t *values = p +WSIZE(t_map_t);
 		box_map(p, size, keys);

@@ -581,7 +581,7 @@ static term_t ext_term_decode2(ext_term_scan_t *es)
 		term_t *kw = es->htop;
 		es->htop += arity;
 		term_t map = tag_boxed(es->htop);
-		term_t *vw = es->htop;
+		term_t *vw = es->htop + WSIZE(t_map_t);
 		box_map(es->htop, arity, keys);
 
 		for (int i = 0; i < arity; i++)
@@ -589,11 +589,27 @@ static term_t ext_term_decode2(ext_term_scan_t *es)
 			term_t k = ext_term_decode2(es);
 			if (k == noval)
 				return noval;
-			*kw++ = k;
 			term_t v = ext_term_decode2(es);
 			if (v == noval)
 				return noval;
-			*vw++ = v;
+
+			for (int j = 0; j < i; j++)
+			{
+				if (is_term_smaller(k, kw[j]))
+				{
+					term_t tempk, tempv;
+					tempk = kw[j];
+					tempv = vw[j];
+
+					kw[j] = k;
+					vw[j] = v;
+
+					k = tempk;
+					v = tempv;
+				}
+			}
+			kw[i] = k;
+			vw[i] = v;
 		}
 
 		return map;
