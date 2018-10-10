@@ -32,7 +32,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "map_util.h"
-
+#include <stdlib.h>
 #include "ling_common.h"
 
 int map_key_index(term_t k, term_t keys)
@@ -58,27 +58,17 @@ int map_key_index(term_t k, term_t keys)
 	return alpha -p;
 }
 
+static int compare(const void* k1, const void* k2)
+{
+	return is_term_smaller(*(term_t*)k2, *(term_t*)k1);
+}
+
 int map_merge(term_t *ks, term_t *vs, int n,
 			  term_t *kvs, term_t nkvs,
 			  term_t *ks1, term_t *vs1)
 {
 	int sz = 0;
-	int i, j;
-	for(i = 0; i < nkvs - 1; i++)
-		for(j = i + 1; j < nkvs; j++)
-		{
-			if (is_term_smaller(kvs[j*2], kvs[i*2]))
-			{
-				term_t temp;
-				temp = kvs[i*2];
-				kvs[i*2] = kvs[j*2];
-				kvs[j*2] = temp;
-
-				temp = kvs[i*2 + 1];
-				kvs[i*2 + 1] = kvs[j*2 + 1];
-				kvs[j*2 + 1] = temp;
-			}
-		}
+	qsort(kvs, nkvs, 2 * sizeof(term_t), compare);
 
 	while (n > 0 && nkvs > 0)
 	{

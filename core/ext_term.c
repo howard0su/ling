@@ -593,21 +593,6 @@ static term_t ext_term_decode2(ext_term_scan_t *es)
 			if (v == noval)
 				return noval;
 
-			for (int j = 0; j < i; j++)
-			{
-				if (is_term_smaller(k, kw[j]))
-				{
-					term_t tempk, tempv;
-					tempk = kw[j];
-					tempv = vw[j];
-
-					kw[j] = k;
-					vw[j] = v;
-
-					k = tempk;
-					v = tempv;
-				}
-			}
 			kw[i] = k;
 			vw[i] = v;
 		}
