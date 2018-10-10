@@ -2107,8 +2107,8 @@ if (!is_boxed_map(t))
 	<% jump(Fail) %>;
 t_map_t *map = (t_map_t *)peel_boxed(t);
 uint32_t nkv = <% arg(Len) %> >> 1;
-ip += nkv +nkv +<% i2l(Wsz+1) %>;
 term_t *kv = (term_t *)ip + <% i2l(Wsz+1) %>;
+ip += nkv +nkv +<% i2l(Wsz+1) %>;
 while (nkv-- > 0)
 {
 	term_t k = *kv++;
