@@ -2029,9 +2029,34 @@ term_t *p = peel_tuple(map->keys);
 int size0 = *p++;
 uint32_t nkv = <% arg(Len) %> >> 1;
 term_t *kv = (term_t *)ip + <% i2l(Wsz+1) %>;
+term_t newkv[nkv + nkv];
 term_t mkeys[size0 +nkv];
 term_t mvals[size0 +nkv];
-int size1 = map_merge(p, map->values, size0, kv, nkv, mkeys, mvals);
+
+for(int i = 0; i < nkv; i++)
+{
+	// key is same
+	newkv[i * 2] = kv[i * 2];
+	// fetch value
+	term_t v = kv[i*2 + 1];
+	if (is_reg(v))
+	{
+		int ri = reg_index(v);
+		if (ri == 0)
+			newkv[i * 2 + 1] = r0;
+		else
+			newkv[i * 2 + 1] = rs[ri];
+	}
+	else
+	{
+		assert(is_slot(v));
+		int si = slot_index(v);
+		newkv[i * 2 + 1] = sp[si + 1];
+	}
+
+}
+
+int size1 = map_merge(p, map->values, size0, newkv, nkv, mkeys, mvals);
 assert(size1 > 0);
 
 term_t out;
@@ -2078,8 +2103,31 @@ term_t *p = peel_tuple(map->keys);
 int size0 = *p++;
 uint32_t nkv = <% arg(Len) %> >> 1;
 term_t *kv = (term_t *)ip + <% i2l(Wsz+1) %>;
+term_t newkv[nkv+nkv];
 term_t mvals[size0]; //TODO: avoid copying
-int ok = map_merge_exact(p, map->values, size0, kv, nkv, mvals);
+for(int i = 0; i < nkv; i++)
+{
+	// key is same
+	newkv[i * 2] = kv[i * 2];
+	// fetch value
+	term_t v = kv[i*2 + 1];
+	if (is_reg(v))
+	{
+		int ri = reg_index(v);
+		if (ri == 0)
+			newkv[i * 2 + 1] = r0;
+		else
+			newkv[i * 2 + 1] = rs[ri];
+	}
+	else
+	{
+		assert(is_slot(v));
+		int si = slot_index(v);
+		newkv[i * 2 + 1] = sp[si + 1];
+	}
+
+}
+int ok = map_merge_exact(p, map->values, size0, newkv, nkv, mvals);
 if (ok < 0)
 	<% jump(Fail) %>;
 
