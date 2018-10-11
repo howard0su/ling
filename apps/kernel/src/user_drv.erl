@@ -185,7 +185,10 @@ server_loop(Iport, Oport, Curr, User, Gr) ->
 	    Curr ! {self(),set_unicode_state,set_unicode_state(Iport,Bool)},
 	    server_loop(Iport, Oport, Curr, User, Gr);
 	{Curr,Req} ->
-	    io_request(Req, Iport, Oport),
+	    case io_request(Req, Iport, Oport) of
+		    {reply, Reply} -> User ! {reply, Reply};
+		    _ -> ok
+	    end,
 	    server_loop(Iport, Oport, Curr, User, Gr);
 	{'EXIT',Iport,_R} ->
 	    server_loop(Iport, Oport, Curr, User, Gr);
@@ -497,12 +500,16 @@ set_unicode_state(Iport, Bool) ->
 %% io_request(Request, InPort, OutPort)
 %% io_requests(Requests, InPort, OutPort)
 %% Note: InPort is unused.
-
+io_request({requests, Reqs}, Iport, Oport) ->
+    io_requests(Reqs, Iport, Oport);
 io_request(Request, Iport, Oport) ->
     try io_command(Request) of
-        Command ->
+	{command, _} = Command  ->
             Oport ! {self(),Command},
-            ok
+            ok;
+	{Command0, Reply} ->
+	    Oport ! {self(), Command0},
+	    {reply, Reply}
     catch
         {requests,Rs} ->
             io_requests(Rs, Iport, Oport);
@@ -519,6 +526,8 @@ io_requests([], _Iport, _Oport) ->
 put_int16(N, Tail) ->
     [(N bsr 8)band 255,N band 255|Tail].
 
+io_command({put_chars_sync, unicode, Cs, Reply}) ->
+    {{command,[?OP_PUTC|unicode:characters_to_binary(Cs,utf8)]}, Reply};
 io_command({put_chars, unicode,Cs}) ->
     {command,[?OP_PUTC|unicode:characters_to_binary(Cs,utf8)]};
 io_command({move_rel,N}) ->
