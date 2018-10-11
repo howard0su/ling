@@ -105,8 +105,8 @@
 
 -compile({no_auto_import,[halt/2,port_command/3]}).
 
--define(LING_COMPAT_REL, 17).
--define(LING_COMPAT_OTP_RELEASE, "17").	%% do not forget to update this
+-define(LING_COMPAT_REL, 19).
+-define(LING_COMPAT_OTP_RELEASE, "19").	%% do not forget to update this
 
 -define(SLICE_REDUCTIONS, 1000).
 
