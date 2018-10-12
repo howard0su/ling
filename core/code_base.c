@@ -1469,7 +1469,7 @@ term_t code_base_list_pre_loaded(heap_t *hp)
 	return pre;
 }
 
-#ifdef RUNTIME_METRICS
+#ifdef EXP_RUNTIME_METRICS
 void print_loaded_module_sizes(void)
 {
 	hash_index_t hi;
@@ -1481,6 +1481,6 @@ void print_loaded_module_sizes(void)
 		
 	printk("NB: sizes are in 32-bit words\n");		
 }
-#endif //RUNTIME_METRICS
+#endif //EXP_RUNTIME_METRICS
 
 //EOF

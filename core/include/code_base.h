@@ -41,11 +41,11 @@
 typedef struct opcode_info_t opcode_info_t;
 struct opcode_info_t {
 	void *label;
-#if defined(LING_DEBUG) || defined(COUNT_IOPS) || defined(RUNTIME_METRICS)
+#if defined(LING_DEBUG) || defined(EXP_COUNT_IOPS) || defined(EXP_RUNTIME_METRICS)
 	const char *var_name;
 #endif
 	int arg_size;
-#ifdef COUNT_IOPS
+#ifdef EXP_COUNT_IOPS
 	uint64_t counter;
 #endif
 };
