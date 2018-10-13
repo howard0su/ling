@@ -4,8 +4,8 @@ LING_OS        := ling
 #HOST_TOOLCHAIN ?= arm-unknown-eabi
 HOST_TOOLCHAIN ?= arm-none-eabi
 CC             := $(HOST_TOOLCHAIN)-gcc
-CPPFLAGS       += -DLING_ARM
-LIBMISC_ARCH   := arm
+CFLAGS         += -DLING_ARM
+MISC_ARCH      := arm
 
 F_NO_REORDER_BLOCKS := -fno-reorder-blocks
 
@@ -15,14 +15,14 @@ CFLAGS        += $(RASPBERRY_PI)
 LDFLAGS       += $(RASPBERRY_PI)
 ASFLAGS       += $(RASPBERRY_PI)
 
-LDFLAGS       += -T arch/$(ARCH)/ling.lds
+LDFLAGS       += -T core/arch/$(ARCH)/ling.lds
 LDFLAGS       += -static
 LDFLAGS       += -Xlinker --build-id=none
 LDFLAGS       += -Xlinker --cref -Xlinker -Map=ling.map
 LDFLAGS       += -nostdlib
 LDFLAGS_FINAL += -lgcc
 
-STARTUP_OBJ     := arch/$(ARCH)/startup.o
+STARTUP_OBJ     := core/arch/$(ARCH)/startup.o
 STARTUP_SRC_EXT := s
 
 # newlib doesn't support assert very well, so set NDEBUG to elide asserts and prevent undefined ref errors at link time.

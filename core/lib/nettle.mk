@@ -101,8 +101,9 @@ NETTLE_SRC := \
 	$(NETTLE_DIR)/write-le64.o
 
 
-NETTLE_CFLAGS = $(CFLAGS) $(CPPFLAGS) -Wno-uninitialized -Wno-unused-value -Wno-implicit-function-declaration -DHAVE_CONFIG_H -Wno-return-type -Wno-int-conversion
+NETTLE_CFLAGS = $(CFLAGS) -Wno-uninitialized -Wno-unused-value -Wno-implicit-function-declaration -DHAVE_CONFIG_H -Wno-return-type -Wno-int-conversion
 
+ifeq ($(LING_ARM),)
 ifneq ($(CC),clang)
 NETTLE_CFLAGS += -Wno-maybe-uninitialized
 NETTLE_ASM_DIR := $(NETTLE_DIR)/gcc
@@ -125,6 +126,23 @@ NETTLE_ASM := \
 	$(NETTLE_ASM_DIR)/umac-nh.o \
 	$(NETTLE_ASM_DIR)/umac-nh-n.o \
 	$(NETTLE_ASM_DIR)/memxor.o
+else
+NETTLE_SRC += \
+	$(NETTLE_DIR)/aes-decrypt-internal.o \
+	$(NETTLE_DIR)/aes-encrypt-internal.o \
+	$(NETTLE_DIR)/camellia-crypt-internal.o \
+	$(NETTLE_DIR)/salsa20-core-internal.o \
+	$(NETTLE_DIR)/salsa20-crypt.o \
+	$(NETTLE_DIR)/sha1-compress.o \
+	$(NETTLE_DIR)/sha256-compress.o \
+	$(NETTLE_DIR)/sha512-compress.o \
+	$(NETTLE_DIR)/sha3-permute.o \
+	$(NETTLE_DIR)/serpent-encrypt.o \
+	$(NETTLE_DIR)/serpent-decrypt.o \
+	$(NETTLE_DIR)/umac-nh.o \
+	$(NETTLE_DIR)/umac-nh-n.o \
+	$(NETTLE_DIR)/memxor.o
+endif
 
 NETTLE_DEP := $(patsubst %.o,%.d,$(NETTLE_SRC))
 -include $(NETTLE_DEP)
@@ -133,8 +151,8 @@ $(NETTLE_SRC): %.o: %.c .config
 	$(CC) -MMD -MP $(NETTLE_CFLAGS) -o $@ -c $<
 
 $(NETTLE_ASM): %.o: %.s .config
-	$(CC) $(ASFLAGS) $(CPPFLAGS) -c $< -o $@
+	$(CC) $(ASFLAGS) $(CFLAGS) -c $< -o $@
 
-CPPFLAGS += -isystem $(NETTLE_DIR)
+CFLAGS += -isystem $(NETTLE_DIR)
 
 ALL_OBJ += $(NETTLE_SRC) $(NETTLE_ASM)

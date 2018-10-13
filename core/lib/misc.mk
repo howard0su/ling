@@ -8,7 +8,7 @@ MISC_SRC += qsort.c scalbln.c scalbn.c sin.c sinh.c stpcpy.c strcat.c strchr.c
 MISC_SRC += strchrnul.c strcmp.c strcpy.c strlen.c strncmp.c strtod.c tan.c tanh.c
 
 ifdef LING_XEN
-CPPFLAGS += -isystem $(MISC_DIR)/include
+CFLAGS += -isystem $(MISC_DIR)/include
 MISC_ARCH := x86
 endif
 
@@ -27,10 +27,10 @@ MISC_DEP := $(patsubst %.c,%.d,$(MISC_SRC))
 -include $(MISC_DEP)
 
 $(MISC_OBJ): %.o: %.c .config
-	$(CC) -MMD -MP $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
+	$(CC) -MMD -MP $(CFLAGS) -o $@ -c $<
 
 $(MISC_AS): %.o: %.s .config
-	$(CC) $(ASFLAGS) $(CPPFLAGS) -c $< -o $@
+	$(CC) $(ASFLAGS) $(CFLAGS) -c $< -o $@
 
 
 ALL_OBJ += $(MISC_OBJ) $(MISC_AS)

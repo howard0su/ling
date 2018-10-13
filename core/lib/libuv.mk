@@ -41,17 +41,17 @@ LIBUV_SRC += \
 	$(LIBUV_DIR)/src/unix/kqueue.o \
 	$(LIBUV_DIR)/src/unix/proctitle.o
 
-CPPFLAGS += -D_DARWIN_USE_64_BIT_INODE=1 -D_DARWIN_UNLIMITED_SELECT=1
+CFLAGS += -D_DARWIN_USE_64_BIT_INODE=1 -D_DARWIN_UNLIMITED_SELECT=1
 endif
 
-CPPFLAGS += -DLING_WITH_LIBUV=1
-CPPFLAGS += -isystem $(LIBUV_DIR)/include
-CPPFLAGS += -isystem $(LIBUV_DIR)/src
+CFLAGS += -DLING_WITH_LIBUV=1
+CFLAGS += -isystem $(LIBUV_DIR)/include
+CFLAGS += -isystem $(LIBUV_DIR)/src
 
 LIBUV_DEP := $(patsubst %.o,%.d,$(LIBUV_SRC))
 -include $(LIBUV_DEP)
 
 $(LIBUV_SRC): %.o: %.c .config
-	$(CC) -MMD -MP $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
+	$(CC) -MMD -MP $(CFLAGS) -o $@ -c $<
 
 ALL_OBJ += $(LIBUV_SRC)

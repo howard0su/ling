@@ -12,14 +12,14 @@ LWIP_OBJ := $(patsubst %.c,%.o,$(LWIP_SRC))
 LWIP_DEP := $(patsubst %.c,%.d,$(LWIP_SRC))
 -include $(LWIP_DEP)
 
-CPPFLAGS += -DLING_WITH_LWIP=1
-CPPFLAGS += -iquote $(LWIP_DIR)/src/include
-CPPFLAGS += -iquote $(LWIP_DIR)/src/include/ipv4
-CPPFLAGS += -iquote $(LWIP_DIR)/src/include/ipv6
-CPPFLAGS += -iquote $(LWIP_DIR)/ling
+CFLAGS += -DLING_WITH_LWIP=1
+CFLAGS += -iquote $(LWIP_DIR)/src/include
+CFLAGS += -iquote $(LWIP_DIR)/src/include/ipv4
+CFLAGS += -iquote $(LWIP_DIR)/src/include/ipv6
+CFLAGS += -iquote $(LWIP_DIR)/ling
 #COMMON_CFLAGS := -fno-stack-protector -U_FORTIFY_SOURCE -fno-omit-frame-pointer
 
 $(LWIP_OBJ): %.o: %.c .config
-	$(CC) -MMD -MP $(CFLAGS) $(CPPFLAGS) -Wno-char-subscripts -o $@ -c $<
+	$(CC) -MMD -MP $(CFLAGS) -Wno-char-subscripts -o $@ -c $<
 
 ALL_OBJ += $(LWIP_OBJ)

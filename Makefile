@@ -45,6 +45,8 @@ ifeq ($(ARCH),xen)
 LING_XEN=1
 else ifeq ($(ARCH),posix)
 LING_POSIX=1
+else ifeq ($(ARCH),arm)
+LING_ARM=1
 else
 $(error Unknown ARCH)
 endif
@@ -59,6 +61,45 @@ else
 $(error Unknown CONF)
 endif
 
+## Defaults
+CFLAGS += -D_ISOC99_SOURCE -D_GNU_SOURCE
+CFLAGS += -DLING_VER=$(LING_VER)
+CFLAGS += -isystem core/lib
+CFLAGS += -iquote core/include
+CFLAGS += -iquote core/bignum
+CFLAGS += -iquote core/arch/$(ARCH)/include
+
+CFLAGS   += -Wall
+#CFLAGS   += -Werror
+CFLAGS   += -Wno-nonnull -std=gnu99
+CFLAGS   += -fno-omit-frame-pointer
+ifndef LING_DARWIN
+CFLAGS	 += -fno-stack-protector -U_FORTIFY_SOURCE -ffreestanding
+endif
+
+# relocatable (partial linking)
+LDFLAGS  += -Xlinker -r
+
+ASFLAGS  := -D__ASSEMBLY__
+
+# include arch depedent configure
+include core/arch/$(ARCH)/config.mk
+
+## CORE
+ifdef LING_DEBUG
+CFLAGS += -O0
+CFLAGS += -DLING_DEBUG=1
+CFLAGS += -DDEBUG_UNUSED_MEM=1
+CFLAGS += -DTRACE_HARNESS=1
+CFLAGS += -gdwarf-3
+LDFLAGS  += -g
+else
+CFLAGS += -g
+CFLAGS += -O3
+ifdef LING_USE_LTO
+CFLAGS += -flto
+endif
+endif
 
 default: railing/railing
 
@@ -106,7 +147,7 @@ bc/ling_code.beam: bc/ling_bifs.beam
 bc/ling_bifs.beam: bc/ling_bifs.erl
 	$(ERLC) -o $(shell dirname $@) $<
 
-bc/gentab/iops_tab.erl: bc/scripts/iops.tab bc/scripts/iops_tab_erl.et $(BC_BEAM) 
+bc/gentab/iops_tab.erl: bc/scripts/iops.tab bc/scripts/iops_tab_erl.et $(BC_BEAM)
 	$(ESCRIPT) bc/scripts/iops_gen bc/scripts/iops.tab bc/scripts/iops_tab_erl.et $@
 
 bc/gentab/%.beam: bc/gentab/%.erl
@@ -123,98 +164,6 @@ bc/ling_iopvars.erl: bc/scripts/iopvars.tab bc/scripts/iopvars_erl.et
 
 bc/ling_iopvars.beam: bc/ling_iopvars.erl
 	$(ERLC) -o bc $<
-
-## CORE
-ifdef LING_XEN
-LING_PLATFORM := xen
-LING_OS := ling
-ifdef LING_LINUX
-CC := gcc
-else ifdef LING_DARWIN
-CC := x86_64-pc-linux-gcc
-endif
-endif
-
-ifdef LING_POSIX
-LING_PLATFORM := unix
-ifdef LING_LINUX
-CC := gcc
-LDFLAGS += -no-pie -nostdlib
-LING_OS := linux
-else ifdef LING_DARWIN
-CC := clang
-LING_OS := darwin
-endif
-endif
-
-CPPFLAGS += -D_ISOC99_SOURCE -D_GNU_SOURCE
-CPPFLAGS += -DLING_VER=$(LING_VER)
-CPPFLAGS += -isystem core/lib
-CPPFLAGS += -iquote core/include
-CPPFLAGS += -iquote core/bignum
-CPPFLAGS += -iquote core/arch/$(ARCH)/include
-
-CFLAGS   := -Wall
-#CFLAGS   += -Werror
-CFLAGS   += -Wno-nonnull -std=gnu99
-CFLAGS   += -fno-omit-frame-pointer
-ifndef LING_DARWIN
-CFLAGS	 += -fno-stack-protector -U_FORTIFY_SOURCE -ffreestanding
-endif
-
-# relocatable (partial linking)
-LDFLAGS  += -Xlinker -r
-
-ASFLAGS  := -D__ASSEMBLY__
-
-ifdef LING_XEN
-XEN_INTERFACE_VERSION := 0x00030205
-CPPFLAGS += -DLING_XEN
-#CPPFLAGS += -DLING_CONFIG_DISK
-CPPFLAGS += -D__XEN_INTERFACE_VERSION__=$(XEN_INTERFACE_VERSION)
-
-CFLAGS   += -std=gnu99
-CFLAGS   += -fexcess-precision=standard -frounding-math -mfpmath=sse -msse2
-CFLAGS   += -Wno-nonnull -Wno-strict-aliasing
-
-LDFLAGS  += -T core/arch/xen/ling.lds
-LDFLAGS  += -static
-LDFLAGS  += -Xlinker --build-id=none
-LDFLAGS  += -Xlinker --cref -Xlinker -Map=core/ling.map
-LDFLAGS  += -nostdlib
-LDFLAGS_FINAL += -lgcc
-
-STARTUP_OBJ     := core/arch/xen/startup.o
-STARTUP_SRC_EXT := S
-
-LING_WITH_LWIP := 1
-endif
-
-ifdef LING_POSIX
-CPPFLAGS += -DLING_POSIX
-CPPFLAGS += -Wno-unknown-pragmas -Wno-int-conversion -Wno-empty-body
-STARTUP_OBJ :=
-ifdef LING_DARWIN
-# assuming Apple LLVM version 6.0 (clang-600.0.57)
-CPPFLAGS += -Wno-tautological-compare -Wno-typedef-redefinition -Wno-self-assign
-endif
-LING_WITH_LIBUV := 1
-endif
-
-ifdef LING_DEBUG
-CFLAGS += -O0
-CPPFLAGS += -DLING_DEBUG=1
-CPPFLAGS += -DDEBUG_UNUSED_MEM=1
-CPPFLAGS += -DTRACE_HARNESS=1
-CPPFLAGS += -gdwarf-3
-LDFLAGS  += -g
-else
-CFLAGS += -g
-CFLAGS += -O3
-ifdef LING_USE_LTO
-CFLAGS += -flto
-endif
-endif
 
 include core/lib/misc.mk
 include core/lib/nettle.mk
@@ -241,11 +190,11 @@ ALL_OBJ += core/ling_main.o
 ifneq ($(STARTUP_SRC_EXT),)
 # this is a c file in posix
 $(STARTUP_OBJ): %.o: %.$(STARTUP_SRC_EXT) .config
-	$(CC) $(ASFLAGS) $(CPPFLAGS) -c $< -o $@
+	$(CC) $(ASFLAGS) $(CFLAGS) -c $< -o $@
 endif
 
 $(ARCH_OBJ) $(CORE_OBJ) $(BIGNUM_OBJ): %.o: %.c core/include/atom_defs.h core/include/mod_info.inc core/include/bif.h .config
-	$(CC) -MMD -MP $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
+	$(CC) -MMD -MP $(CFLAGS) -o $@ -c $<
 
 CORE_GENTAB_ERL := core/gentab/atoms.erl core/gentab/exp_tab.erl
 CORE_GENTAB_BEAM := $(patsubst %.erl,%.beam,$(sort $(wildcard core/gentab/*.erl) $(CORE_GENTAB_ERL)))
@@ -271,7 +220,7 @@ core/ling_main.c: core/scripts/ling_main_c.et core/scripts/hot_cold_iops $(CORE_
 	$(ESCRIPT) core/scripts/main_gen core/scripts/ling_main_c.et core/scripts/hot_cold_iops $@
 
 core/ling_main.o: core/ling_main.c core/include/atom_defs.h core/include/bif.h core/include/mod_info.inc core/premod.inc
-	$(CC) -MMD -MP $(CFLAGS) $(CPPFLAGS) $(F_NO_REORDER_BLOCKS) -o $@ -c $<
+	$(CC) -MMD -MP $(CFLAGS) $(F_NO_REORDER_BLOCKS) -o $@ -c $<
 
 core/include/bif.h: bc/scripts/bif.tab
 	$(ESCRIPT) core/scripts/bifs_gen $< $@

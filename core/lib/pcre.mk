@@ -24,8 +24,8 @@ PCRE_DEP := $(patsubst %.o,%.d,$(PCRE_SRC))
 -include $(PCRE_DEP)
 
 $(PCRE_SRC): %.o: %.c .config
-	$(CC) -MMD -MP $(CFLAGS) $(CPPFLAGS) -DHAVE_CONFIG_H -o $@ -c $<
+	$(CC) -MMD -MP $(CFLAGS) -DHAVE_CONFIG_H -o $@ -c $<
 
-CPPFLAGS += -isystem $(PCRE_DIR)
+CFLAGS += -isystem $(PCRE_DIR)
 
 ALL_OBJ += $(PCRE_SRC)
