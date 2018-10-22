@@ -116,6 +116,8 @@ void fatal_error(const char *fmt, ...) __attribute__ ((noreturn)); // __attribut
      int debug(const char *fmt, ...);
 #  elif LING_XEN
 #    define debug(...)  printk(__VA_ARGS__)
+#  elif LING_ARM
+#    define debug(...)  printk(__VA_ARGS__)
 #  endif
 #else
 #  define debug(fmt, ...)
