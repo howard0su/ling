@@ -115,6 +115,13 @@ term_t bif_is_float1(term_t N, proc_t *proc)
 	return A_FALSE;
 }
 
+term_t bif_is_map1(term_t N, proc_t *proc)
+{
+	if (is_boxed_map(N))
+		return A_TRUE;
+
+	return A_FALSE;
+}
 term_t bif_is_number1(term_t N, proc_t *proc)
 {
 	if (is_int(N))

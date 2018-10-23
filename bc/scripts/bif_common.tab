@@ -217,6 +217,7 @@ erlang:is_bitstring(Bits)	bif_is_bitstring1
 erlang:is_list(List)		bif_is_list1
 erlang:is_integer(N)		bif_is_integer1
 erlang:is_float(N)			bif_is_float1
+erlang:is_map(N)		bif_is_map1
 erlang:is_number(N)			bif_is_number1
 erlang:is_atom(Atom)		bif_is_atom1
 erlang:is_boolean(Fun)		bif_is_boolean1
