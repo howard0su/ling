@@ -1104,4 +1104,57 @@ term_t cbif_release_counter1(proc_t *proc, term_t *regs)
 	return A_TRUE;
 }
 
+term_t cbif_insert_element3(proc_t *proc, term_t *regs)
+{
+	if (!is_int(regs[0]))
+		badarg(regs[0]);
+	if (!is_tuple(regs[1]))
+		badarg(regs[1]);
+	uint32_t index = int_value(regs[0]);
+	uint32_t *orig = peel_tuple(regs[1]);
+	if ((index > orig[0] + 1) || (index <= 0))
+		badarg(regs[0]);
+
+	int newlen = orig[0] + 1;
+	uint32_t *new = heap_alloc(&proc->hp, newlen + 1);
+	int i;
+
+	new[0] = newlen;
+	for (i = 1; i < index; i++)
+		new[i] = orig[i];
+	new[i] = regs[2];
+	for (; i <= orig[0]; i++)
+		new[1 + i] = orig[i];
+	heap_set_top(&proc->hp, new + newlen + 1);
+	return tag_tuple(new);
+}
+
+term_t cbif_delete_element2(proc_t *proc, term_t *regs)
+{
+	if (!is_int(regs[0]))
+		badarg(regs[0]);
+	if (!is_tuple(regs[1]))
+		badarg(regs[1]);
+	uint32_t index = int_value(regs[0]);
+	uint32_t *orig = peel_tuple(regs[1]);
+	if (index > orig[0] || index <= 0 )
+		badarg(regs[0]);
+
+	if (orig[0] == 0)
+		badarg(regs[1]);
+
+	int newlen = orig[0] - 1;
+	if (newlen == 0)
+		return ZERO_TUPLE;
+	uint32_t *new = heap_alloc(&proc->hp, newlen - 1);
+	int i;
+
+	new[0] = newlen;
+	for (i = 1; i < index; i++)
+		new[i] = orig[i];
+	for (; i < orig[0]; i++)
+		new[i] = orig[i + 1];
+	heap_set_top(&proc->hp, new + newlen - 1);
+	return tag_tuple(new);
+}
 //EOF

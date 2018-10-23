@@ -157,6 +157,9 @@ erlang:read_counter(Ref)			cbif_read_counter1
 erlang:update_counter(Ref,Incr)		cbif_update_counter2
 erlang:release_counter(Ref)			cbif_release_counter1
 
+erlang:insert_element(Index,Tuple,Item)         cbif_insert_element3
+erlang:delete_element(Index,Tuple)		cbif_delete_element2
+
 #bif_outlet.c
 erlang:port_info(Port,Item) 			cbif_port_info2
 erlang:port_open(Drv,BitOpts)			cbif_port_open2
