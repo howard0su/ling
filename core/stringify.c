@@ -200,6 +200,10 @@ static int term_to_str_1(int depth, term_t t, char *buf, int len)
 				result = scratch;
 			}
 		}
+		else if (is_reg(t))
+			RETPRINTF("#Reg<%d>", reg_index(t));
+		else if (is_slot(t))
+			RETPRINTF("#Slot<%d>", slot_index(t));
 		else if (t == nil)
 			result = "[]";
 		else if (t == noval)
@@ -369,6 +373,35 @@ static int term_to_str_1(int depth, term_t t, char *buf, int len)
 			uint32_t id = opr_hdr_id(ref);
 			//uint32_t creat = opr_hdr_creat(ref);
 			RETPRINTF("#Ref<%pt.%d.%d.%d>", T(ref->node), (int)id, (int)ref->id1, (int)ref->id2);
+		}
+		case SUBTAG_MAP:
+		{
+			EMIT('#');
+			EMIT('{');
+			t_map_t *map = (t_map_t*)peel_boxed(t);
+			uint32_t nelts = map_size(map);
+			if (nelts > 0)
+			{
+			term_t *elts = ((term_t *)peel_tuple(map->keys))+1;
+			int i;
+			for (i = 0; i < nelts; i++)
+			{
+				int n = term_to_str_1(depth +1, elts[i], buf+taken, len-taken);
+				taken += n;
+				if (taken >= len-1)
+					goto clip;
+				EMIT('='); EMIT('>');
+				n = term_to_str_1(depth + 1, map->values[i], buf + taken, len - taken);
+				taken += n;
+				if (taken >= len-1)
+					goto clip;
+				if (i < nelts-1)
+					EMIT(',');
+			}
+			}
+			EMIT('}');
+			buf[taken] = 0;
+			return taken;
 		}
 		default:
 			RETERR(t);
