@@ -18,5 +18,5 @@ matrix:
     - os: osx
       env: ARCH=posix CONF=lto
 script:
-  - travis_wait 60 make -j2 play ARCH=$ARCH CONF=$CONF
+  - make -j2 play ARCH=$ARCH CONF=$CONF
 sudo: false
