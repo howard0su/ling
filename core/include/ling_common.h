@@ -136,10 +136,11 @@ void gdb_break(void);
 
 #ifdef TRACE_HARNESS
 #define TRACE_MASK_NONE			0
-#define TRACE_MASK_EXCEPTION	1
+#define TRACE_MASK_EXCEPTION		1
 #define TRACE_MASK_BIF			2
 #define TRACE_MASK_CALL			4
-#define TRACE_MASK_ALL			(TRACE_MASK_EXCEPTION | TRACE_MASK_BIF | TRACE_MASK_CALL)
+#define TRACE_MASK_MAP			8
+#define TRACE_MASK_ALL			(-1)
 extern uint32_t trace_mask;
 extern uint32_t trace_module;	// term_t
 #endif

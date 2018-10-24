@@ -2012,7 +2012,7 @@ box_map(p, size, keys);
 heap_set_top(&proc->hp, p);
 light_swap_in();
 
-<% set_dst(Dst, <<"tuple">>) %>
+<% set_dst(Dst, <<"map">>) %>
 
 ip += size +size +<% i2l(Wsz+1) %>;
 next();
@@ -2033,6 +2033,11 @@ term_t newkv[nkv + nkv];
 term_t mkeys[size0 +nkv];
 term_t mvals[size0 +nkv];
 
+#ifdef TRACE_HARNESS
+if (trace_mask & TRACE_MASK_MAP)
+	printk("TRACEMAP: update_map_assoc Src=%pt, Dst:\n", T(t));
+#endif
+
 for(int i = 0; i < nkv; i++)
 {
 	// key is same
@@ -2047,13 +2052,20 @@ for(int i = 0; i < nkv; i++)
 		else
 			newkv[i * 2 + 1] = rs[ri];
 	}
-	else
+	else if (is_slot(v))
 	{
-		assert(is_slot(v));
 		int si = slot_index(v);
 		newkv[i * 2 + 1] = sp[si + 1];
 	}
-
+	else
+	{
+		newkv[i * 2 + 1 ] = v;
+	}
+#ifdef TRACE_HARNESS
+	if (trace_mask & TRACE_MASK_MAP)
+		printk("TRACEMAP: \t%pt => %pt (param: %pt):\n",
+			T(newkv[i*2]), T(newkv[i*2+1]), v);
+#endif
 }
 
 int size1 = map_merge(p, map->values, size0, newkv, nkv, mkeys, mvals);
@@ -2105,6 +2117,15 @@ uint32_t nkv = <% arg(Len) %> >> 1;
 term_t *kv = (term_t *)ip + <% i2l(Wsz+1) %>;
 term_t newkv[nkv+nkv];
 term_t mvals[size0]; //TODO: avoid copying
+
+#ifdef TRACE_HARNESS
+if (trace_mask & TRACE_MASK_MAP)
+{
+	printk("TRACEMAP: update_map_exact Src=%pt, Dst:\n",
+		T(t));
+}
+#endif
+
 for(int i = 0; i < nkv; i++)
 {
 	// key is same
@@ -2119,12 +2140,22 @@ for(int i = 0; i < nkv; i++)
 		else
 			newkv[i * 2 + 1] = rs[ri];
 	}
-	else
+	else if (is_slot(v))
 	{
-		assert(is_slot(v));
 		int si = slot_index(v);
 		newkv[i * 2 + 1] = sp[si + 1];
 	}
+	else
+	{
+		newkv[i * 2 + 1] = v;
+	}
+#ifdef TRACE_HARNESS
+	if (trace_mask & TRACE_MASK_MAP)
+	{
+		printk("TRACEMAP: \t%pt => %pt (param: %pt):\n",
+			T(newkv[i*2]), T(newkv[i*2+1]), v);
+	}
+#endif
 
 }
 int ok = map_merge_exact(p, map->values, size0, newkv, nkv, mvals);
