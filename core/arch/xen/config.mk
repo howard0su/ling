@@ -8,9 +8,9 @@ CC := x86_64-pc-linux-gcc
 endif
 
 XEN_INTERFACE_VERSION := 0x00030205
-CPLAGS   += -DLING_XEN
+CFLAGS   += -DLING_XEN
 #CFLAGS += -DLING_CONFIG_DISK
-CPLAGS   += -D__XEN_INTERFACE_VERSION__=$(XEN_INTERFACE_VERSION)
+CFLAGS   += -D__XEN_INTERFACE_VERSION__=$(XEN_INTERFACE_VERSION)
 
 CFLAGS   += -std=gnu99
 CFLAGS   += -fexcess-precision=standard -frounding-math -mfpmath=sse -msse2
