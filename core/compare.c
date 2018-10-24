@@ -49,6 +49,7 @@ static int export_compare(t_export_t *x1, t_export_t *x2);
 static int pid_compare(t_long_pid_t *p1, t_long_pid_t *p2);
 static int oid_compare(t_long_oid_t *o1, t_long_oid_t *o2);
 static int ref_compare(t_long_ref_t *r1, t_long_ref_t *r2);
+static int map_compare(t_map_t *m1, t_map_t *m2);
 
 int are_terms_equal(term_t a, term_t b, int exact)
 {
@@ -178,10 +179,11 @@ int are_terms_equal(term_t a, term_t b, int exact)
 			int size = map_size(m1);
 			if (size != map_size(m2))
 				return 0;
-			if (!are_terms_equal(m1->keys, m2->keys, exact))
+			if (m1->keys != m2->keys && !are_terms_equal(m1->keys, m2->keys, exact))
 				return 0;
 			for (int i = 0; i < size; i++)
-				if (!are_terms_equal(m1->values[i], m2->values[i], exact))
+				if (m1->values[i] != m2->values[i] &&
+					!are_terms_equal(m1->values[i], m2->values[i], exact))
 					return 0;
 			return 1;
 		}
@@ -337,6 +339,8 @@ int is_term_smaller(term_t a, term_t b)
 				case SUBTAG_MATCH_CTX:
 				case SUBTAG_SUB_BIN:
 					return is_term_smaller_3(adata, bdata);
+				case SUBTAG_MAP:
+					return map_compare((t_map_t *)adata, (t_map_t *)bdata) < 0;
 
 				default:
 					assert(boxed_tag(adata) == SUBTAG_FLOAT);
@@ -655,6 +659,25 @@ static int ref_compare(t_long_ref_t *r1, t_long_ref_t *r2)
 		return -1;
 	if (r2->id2 < r1->id2)
 		return 1;
+
+	return 0;
+}
+
+static int map_compare(t_map_t *m1, t_map_t *m2)
+{
+	if (is_term_smaller(m1->keys, m2->keys))
+		return -1;
+	if (is_term_smaller(m2->keys, m1->keys))
+		return 1;
+	assert(map_size(m1) == map_size(m2));
+
+	for(int i = 0; i < map_size(m1); i++)
+	{
+		if (is_term_smaller(m1->values[i], m2->values[i]))
+			return -1;
+		if (is_term_smaller(m2->values[i], m1->values[i]))
+			return 1;
+	}
 
 	return 0;
 }
