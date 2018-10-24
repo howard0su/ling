@@ -1,5 +1,5 @@
 language: erlang
-otp_version:
+otp_release:
   - 19.0
 os:
   - linux
