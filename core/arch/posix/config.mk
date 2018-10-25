@@ -1,8 +1,13 @@
 LING_PLATFORM := unix
 ifdef LING_LINUX
 CC := gcc
-LDFLAGS += -no-pie -nostdlib
+LDFLAGS += -nostdlib
 LING_OS := linux
+
+ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]no-pie'),)
+	LDFLAGS += -no-pie
+endif
+
 else ifdef LING_DARWIN
 CC := clang
 LING_OS := darwin

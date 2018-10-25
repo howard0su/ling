@@ -43,7 +43,11 @@ ld(posix) ->
 			"-arch", "x86_64"
 		];
 		{unix, linux} ->
-			["gcc", "-lm", "-no-pie"];
+			Options = ["gcc", "-lm"],
+			case default_pie() of
+				true -> Options ++ ["-no-pie"];
+				_ -> Options
+			end;
 		_ ->
 			gold()
 	end;
@@ -470,7 +474,11 @@ avoid_ebin_stem(Dir) ->
 		Stem -> list_to_atom(Stem)
 	end.
 
-
+default_pie() ->
+	Count0 = os:cmd("gcc -dumpspecs 2>/dev/null | grep -ce '[^f]no-pie'"),
+	Count1 = re:replace(Count0, "(^\\s+)|(\\s+$)", "", [global,{return,list}]),
+	Count = erlang:list_to_integer(Count1),
+	Count > 0.
 
 %% vim: noet ts=4 sw=4 sts=4
 %%EOF
